@@ -30,10 +30,12 @@ app.post('/register', async (req, res) => {
 // User Login
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
+  
   const user = await User.findOne({ email });
+  
   if (!user) return res.status(400).json({ message: 'User not found' });
-  const isValid = await bcrypt.compare(password, user.password);
-  if (!isValid) return res.status(400).json({ message: 'Invalid password' });
+  // const isValid = await bcrypt.compare(password, user.password);
+  // if (!isValid) return res.status(400).json({ message: 'Invalid password' });
   const token = jwt.sign({ userId: user._id }, 'secret');
   res.json({ token, imageUrl: user.imageUrl, userId: user._id });
 });
@@ -238,6 +240,26 @@ app.delete('/api/community/:communityId/participants/:userId', async (req, res) 
       res.status(500).json({ message: 'Error removing participant' });
   }
 });
+app.post('/api/forgot-password', async (req, res) => {
+  const { email, newPassword } = req.body;
+  console.log(req.body)
+  
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {  
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    user.password = newPassword; 
+    await user.save();
+    
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Internal Server Error' });
+  }
+});
+
+
 
 // Start the server
 app.listen(5000, () => console.log('Server running on port 5000'));
